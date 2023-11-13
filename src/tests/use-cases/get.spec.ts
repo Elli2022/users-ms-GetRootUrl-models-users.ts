@@ -33,7 +33,7 @@
 //     await mkdir(config.FILE_FOLDER_PATH)
 //     await writeFile(config.FILE_DB_PATH, JSON.stringify(users))
 //   })
-  
+
 //   after(async () => rm(config.FILE_FOLDER_PATH, { recursive: true }))
 
 //   it('should return a list of users', async () => {

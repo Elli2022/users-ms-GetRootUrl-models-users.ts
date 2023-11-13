@@ -24,13 +24,13 @@ export default function createPost({
       modified: userFactory.modified(),
     };
 
-    // 'or' query
+    // 'or' query for duplicates
     let query = { $or: [{ username: user.username }, { email: user.email }] };
     const checkDuplicate = await findDocuments({ query, dbConfig });
     if (checkDuplicate.length) throw new Error(errorMsgs.EXISTING_USER);
 
-    await insertDocument({ document: user, dbConfig });
-    logger.info("[POST][USE-CASE] Inserting object process - DONE!");
+    const savedUser = await insertDocument({ document: user, dbConfig });
+    logger.info(`Användare ${savedUser.username} skapades`); // Användare skapades loggmeddelande
 
     const inserted = get({ params: { username: user.username } });
 

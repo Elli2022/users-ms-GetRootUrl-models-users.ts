@@ -34,7 +34,7 @@ export const updateDocument = async ({ query, values }) => {
   }
 };
 
-export const dropDb = async () => {
+export const dropDb = async (dbConfig) => {
   try {
     await MongoDBClient.connect();
     await MongoDBClient.dropDB();
