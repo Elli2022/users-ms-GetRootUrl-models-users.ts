@@ -13,14 +13,25 @@ const getUsersEP = async (req, res) => {
   }
 };
 
+// const registerUserEP = async (req, res) => {
+//   try {
+//     let results = await post({ params: req.body });
+//     res.json({ err: 0, data: results });
+//   } catch (err) {
+//     logger.error(`[EP][POST] ${req.method}: ${err.message}`);
+//     res.status(403);
+//     res.json({ err: 1, data: err.message });
+//   }
+// };
+
 const registerUserEP = async (req, res) => {
   try {
-    let results = await post({ params: req.body });
-    res.json({ err: 0, data: results });
+    const results = await post({ params: req.body });
+    res.status(201).json({ err: 0, data: results }); // 201 Created för en lyckad skapelse
   } catch (err) {
     logger.error(`[EP][POST] ${req.method}: ${err.message}`);
-    res.status(403);
-    res.json({ err: 1, data: err.message });
+    const statusCode = err.isValidationError ? 400 : 500; // Exempel på att sätta rätt statuskod baserat på felets typ
+    res.status(statusCode).json({ err: 1, data: err.message });
   }
 };
 

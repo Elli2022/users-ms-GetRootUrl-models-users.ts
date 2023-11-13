@@ -1,82 +1,66 @@
-const { MongoClient } = require('mongodb');
-
-const { logger } = require('../../libs/logger');
+// src/app/initializers/mongoDb/index.ts
+import { MongoClient } from "mongodb";
+import config from "../../config"; // Importera konfigurationen
+import { logger } from "../../libs/logger";
 
 class mongoDBClient {
-	dbName;
-	dbUri;
-	dbColl;
-	db;
-	connection;
+  private dbName: string;
+  private dbUri: string;
+  private dbColl: string;
+  private connection: MongoClient | null;
+  private db: any;
 
-	constructor({ dbName, dbUri, dbColl }) {
-		this.dbName = dbName;
-		this.dbUri = dbUri;
-		this.dbColl = dbColl;
-	}
+  constructor() {
+    this.dbName = config.DB_CONFIG.dbName;
+    this.dbUri = config.DB_CONFIG.dbUri;
+    this.dbColl = config.DB_CONFIG.dbColl;
+    this.connection = null;
+    this.db = null;
+  }
 
-	async connect() {
-		const connection = await MongoClient.connect(this.dbUri);
-		this.db = connection.db();
-		logger.info('[MONGODB] Connection successfull.');
-		return;
-	}
+  async connect() {
+    // Anslut utan de borttagna alternativen
+    this.connection = await MongoClient.connect(this.dbUri);
+    this.db = this.connection.db(this.dbName);
+    logger.info("[MONGODB] Connection successful.");
+  }
 
-	async findDocumentsByQuery({ query }) {
-		await this.connect()
-		const results = await this.db.collection(this.dbColl).find(query).toArray()
-		this.close();
-		return results
-	}
-	
-	async insertDocument({ document }) {
-		if (!isObject(document)) {
-			throw new Error(
-				'[MONGODB] insertDocumentWithIndex: document is not an object'
-			);
-		}
-		await this.connect()
-		const results = await this.db.collection(this.dbColl).insertOne(document);
-		this.close();
-		return results
-	}
+  async findDocumentsByQuery({ query }: { query: object }) {
+    await this.connect();
+    const results = await this.db.collection(this.dbColl).find(query).toArray();
+    await this.close();
+    return results;
+  }
 
-	async updateDocument({ query, values }) {
-		logger.info(`[MONGODB] Modifying ${query}.`);
-		if (!(isObject(values) && isObject(query))) {
-			throw Error(
-				'mongoClient.upsert: values, query and option should be an object.'
-			);
-		}
-		logger.info(`[MONGODB] ${query} modified successfully.`);
-		await this.connect();
-		const res = await this.db
-			.collection(this.dbColl)
-			.updateOne(query, values, {} || {});
+  async insertDocument({ document }: { document: object }) {
+    await this.connect();
+    const results = await this.db.collection(this.dbColl).insertOne(document);
+    await this.close();
+    return results;
+  }
 
-		this.close();
-		return res;
-	}
+  async updateDocument({ query, values }: { query: object; values: object }) {
+    await this.connect();
+    const results = await this.db
+      .collection(this.dbColl)
+      .updateOne(query, { $set: values });
+    await this.close();
+    return results;
+  }
 
-	async close() {
-		logger.info(`[MONGODB] Closing connection...`);
-		if (this.connection) this.connection.close();
-		logger.info(`[MONGODB] Connection closed...`);
-		return;
-	}
+  async close() {
+    if (this.connection) {
+      await this.connection.close();
+      logger.info("[MONGODB] Connection closed.");
+    }
+  }
 
-	async dropDB() {
-		logger.info(`[MONGODB] Dropping DB ${this.dbName}...`);
-		await this.connect();
-		await this.db.dropDatabase();
-		logger.info(`[MONGODB] Dropped DB ${this.dbName}`);
-		return;
-	}
+  async dropDB() {
+    if (this.db) {
+      await this.db.dropDatabase();
+      logger.info(`[MONGODB] Dropped DB ${this.dbName}`);
+    }
+  }
 }
 
-function isObject(obj) {
-	return Object.keys(obj).length > 0 && obj.constructor === Object;
-}
-
-export default mongoDBClient;
-                                                                                                                                 
+export default new mongoDBClient(); // Exportera en instans av klienten

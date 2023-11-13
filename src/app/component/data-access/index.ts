@@ -13,4 +13,4 @@ const updateDocument = ({ query, values, dbConfig }) =>
 const findDocuments = ({ query, dbConfig }) =>
   makeFindDocuments({ query, ...dbConfig });
 
-export { findDocuments, insertDocument };
+export { findDocuments, insertDocument, updateDocument };
